@@ -22,91 +22,136 @@ mongodump --host=127.0.0.1 -d twitter-db -c tweets -o .
 
 ### MongoDB basic query
 ##### 点赞数在1000和1100之间的记录
-```sql
-db.getCollection('tweets').find({'favorite_count': {'$gt': 1000, '$lt': 1100}})
+```javascript
+db.getCollection('tweets').find({
+    favorite_count: {
+        $gt: 1000,
+        $lt: 1100
+    }
+})
 ```
 
 ##### 含Javascript的记录
-```sql
-db.getCollection('tweets').find({'text': /Javascript/})
+```javascript
+db.getCollection('tweets').find({
+    text: /Javascript/
+})
 ```
 
 ##### 用户Premier League所发的所有记录
-```sql
-db.getCollection('tweets').find({'user.name': 'Premier League'})
+```javascript
+db.getCollection('tweets').find({
+    'user.name': 'Premier League'
+})
 ```
 ##### 用户Premier League和BBC News (World)所发的被转发超过500次的记录
-```sql
-db.getCollection('tweets').find(
-{'user.name': {'$in': ['Premier League', 'BBC News (World)']},'retweet_count': {'$gte': 500}},
-{'_id': 0, 'text': 1, 'user.name': 1})
+```javascript
+db.getCollection('tweets').find({
+    'user.name': {
+        $in: ['Premier League', 'BBC News (World)']
+    },
+    retweet_count: { $gte: 500 }
+}, {
+    _id: 0,
+    text: 1,
+    'user.name': 1
+})
 ```
 ##### 提到Allan Yeung的记录
-```sql
+```javascript
 db.getCollection('tweets').find({
-'entities.user_mentions.name': 'Allan Yeung'
+    'entities.user_mentions.name': 'Allan Yeung'
 })
 ```
 
 ### Aggregation Framework
 ##### 按发tweet记录数对用户排序
-```sql
-db.getCollection('tweets').aggregate([
-{'$group': {'_id': '$user.screen_name', 'count': {'$sum': 1}}},
-{'$sort': {'count': -1}}
-])
+```javascript
+db.getCollection('tweets').aggregate([{
+    $group: {
+        _id: '$user.screen_name',
+        count: { $sum: 1 }
+    }
+}, {
+    $sort: {
+        count: -1
+    }
+}])
 ```
 ##### 找出粉丝人数与朋友人数比例最大的用户
-```sql
-db.getCollection('tweets').aggregate([
-{'$match': {'user.friends_count': {'$gt': 0}, 'user.followers_count': {'$gt': 0}}},
-{'$project': {'ratio': {'$divide': ['$user.followers_count', '$user.friends_count']}, 'screen_name': '$user.screen_name'}},
-{'$sort': {'ratio': -1}},
-{'$limit': 1}
-])
+```javascript
+db.getCollection('tweets').aggregate([{
+    $match: {
+        'user.friends_count': { $gt: 0 },
+        'user.followers_count': { $gt: 0 }
+    }
+}, {
+    $project: {
+        ratio: {
+            $divide: ['$user.followers_count', '$user.friends_count']
+        },
+        screen_name: '$user.screen_name'
+    }
+}, {
+    $sort: { ratio: -1 }
+}, {
+    $limit: 1
+}])
 ```
 ##### 找出发推文@最多的人
-```sql
-db.getCollection('tweets').aggregate([
-    {'$unwind': '$entities.user_mentions'},
-    {'$group': {'_id': '$user.screen_name', 'count': {'$sum': 1}}},
-    {'$sort': {'count': -1}},
-    {'$limit': 1}
-])
+```javascript
+db.getCollection('tweets').aggregate([{
+    $unwind: '$entities.user_mentions'
+}, {
+    $group: {
+        _id: '$user.screen_name',
+        count: { $sum: 1 }
+    }
+}, {
+    $sort: { count: -1 }
+}, {
+    $limit: 1
+}])
 ```
 
-```sql
+```javascript
 db.getCollection('tweets').aggregate([
-    {'$unwind': '$entities.user_mentions'},
-    {'$group': {'_id': '$user.screen_name', 'textSet': {'$addToSet': '$text'}, 'count': {'$sum': 1}}},
-    {'$sort': {'count': -1}},
-    {'$limit': 1}
+  { $unwind: '$entities.user_mentions' },
+  { 
+    $group: {
+        _id: '$user.screen_name',
+        textSet: { $addToSet: '$text' },
+        count: { $sum: 1 }
+    }
+  },
+  {$sort: { count: -1 } },
+  { $limit: 1 }
 ])
 ```
 ##### who mention the most unique hashtags
-```sql
-db.getCollection('tweets').aggregate([
-    {'$unwind': '$entities.user_mentions'},
-    {'$group': {
-        '_id': '$user.screen_name',
-        'mset': {
-                '$addToSet': '$entities.user_mentions.screen_name'
-         }
-    }},
-    {'$unwind': '$mset'},
-    {'$group': {'_id': '$_id', 'count': {'$sum': 1}}},
-    {'$sort': {'count': -1}},
-    {'$limit': 10}
-])
-```
-
-```sql
+```javascript
 db.getCollection('tweets').aggregate([
     {$unwind: '$entities.user_mentions'},
     {$group: {
         _id: '$user.screen_name',
         mset: {
-            '$addToSet': '$entities.user_mentions.screen_name'
+            $addToSet: '$entities.user_mentions.screen_name'
+         }
+    }},
+    {$unwind: '$mset'},
+    {$group: {_id: '$_id', count: {$sum: 1}}},
+    {$sort: {count: -1}},
+    {$limit: 10}
+])
+```
+
+```javascript
+db.getCollection('tweets').aggregate([
+    {$unwind: '$entities.user_mentions'},
+    {$group: {
+        _id: '$user.screen_name',
+        mset: {
+            $addToSet: '$entities.user_mentions.screen_name'
         }
     }},
     {$project: {count: {$size: '$mset'}, mset: 1}},
