@@ -8,6 +8,38 @@
 ##### 大数据量，高性能
 NoSQL数据库都具有非常高的读写性能，尤其在大数据量下，同样表现优秀。这得益于它的无关系性，数据库的结构简单。一般MySQL使用Query Cache，每次表的更新Cache就失效，是一种大粒度的Cache，在针对web2.0的交互频繁的应用，Cache性能不高。而NoSQL的Cache是记录级的，是一种细粒度的Cache，所以NoSQL在这个层面上来说就要性能高很多了。
 
+### Compare with RDBMS
+|            RDBMS            |        MongoDB       |
+|:---------------------------:|:--------------------:|
+| database                    | database             |
+| table                       | collection           |
+| row                         | document             |
+| column                      | field                |
+| primary key                 | primary key(_id)     |
+| aggregation (e.g. group by) | aggregation pipeline |
+
+### Design a task tracking app
+#### RDB
+| id |  name |        email        |   title  |
+|:--:|:-----:|:-------------------:|:--------:|
+| 1  | Billy | Billy.Xu@xplusz.com | engineer |
+
+| id |  street  |    city   | user_id |
+|:--:|:--------:|:---------:|:-------:|
+| 1  | street 1 | Su zhou   | 1       |
+| 2  | street 2 | Shang hai | 1       |
+
+#### MongoDB
+```javascript
+db.user.findOne( { email: "Billy.Xu@xplusz.com"} ){   _id: 1,   name: "Billy",   email: "Billy.Xu@xplusz.com",   title: "engineer",   addresses: [      { street: "street 1", city: "Su zhou" },      { street: "street 2", city: "Shang hai" }   ]}
+```
+
+#### Embeding vs Referencing
+* Embeding: one - many (few)
+* Referencing: one - many
+
+* many to many
+
 ### Get you hands dirty
 [Demo data file](https://github.com/ozlerhakan/mongodb-json-files/tree/master/datasets)
 ##### Import
@@ -36,6 +68,11 @@ db.getCollection('tweets').find({
 db.getCollection('tweets').find({
     text: /Javascript/
 })
+```
+```javascript
+db.getCollection('tweets').find( {
+	$text: { $search: "javascript" }
+} )
 ```
 
 ##### 用户Premier League所发的所有记录
@@ -161,3 +198,7 @@ db.getCollection('tweets').aggregate([
 ```
 
 ### Index
+
+### 复制
+
+### 分片
