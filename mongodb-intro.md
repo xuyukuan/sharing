@@ -2,11 +2,17 @@
 
 ### MongoDB的优势
 ##### 灵活的数据模型
-[ref link](https://www.mongodb.com/blog/post/mongodb-vs-sql-day-1-2)
-##### 易扩展
-当数据规模大到一个机器装不下了，或者一台机器数据读写负载太高，需要使用cluster的时候，关系型数据库的partitioning, sharding要复杂的手工处理。MongoDB可以自动按照用户给定的sharding key把数据分片，并且动态地平衡各个机器的数据量。
+你想要的数据是什么样子，存在数据库里的就是什么样子。
+可以在文档中直接插入数组之类的复杂数据类型，并且文档的key和value不是固定的数据类型和大小，所以开发者在使用MongoDB时无须预定义关系型数据库中的”表”等数据库对象，设计数据库将变得非常方便，可以大大地提升开发进度。
+##### 易扩展, 高可用性
+副本集， 分片
 ##### 大数据量，高性能
-NoSQL数据库都具有非常高的读写性能，尤其在大数据量下，同样表现优秀。这得益于它的无关系性，数据库的结构简单。一般MySQL使用Query Cache，每次表的更新Cache就失效，是一种大粒度的Cache，在针对web2.0的交互频繁的应用，Cache性能不高。而NoSQL的Cache是记录级的，是一种细粒度的Cache，所以NoSQL在这个层面上来说就要性能高很多了。
+NoSQL数据库都具有非常高的读写性能，尤其在大数据量下，同样表现优秀。这得益于它的无关系性，数据库的结构简单。
+#### 数据压缩
+自从MongoDB 3.0推出以后，MongoDB引入了一个高性能的存储引擎WiredTiger，并且它在数据压缩性能上得到了极大的提升，跟之前的MMAP引擎相比，压缩比至少可增加5倍以上，可以极大地改善磁盘空间使用率。
+
+### MongoDB不适用的应用场景
+在某些场景下，MongoDB作为一个非关系型数据库有其局限性。MongoDB不支持事务操作，所以需要用到事务的应用建议不用MongoDB，另外MongoDB目前不支持join操作，需要复杂查询的应用也不建议使用MongoDB。
 
 ### Compare with RDBMS
 |            RDBMS            |        MongoDB       |
@@ -31,12 +37,25 @@ NoSQL数据库都具有非常高的读写性能，尤其在大数据量下，同
 
 #### MongoDB
 ```javascript
-db.user.findOne( { email: "Billy.Xu@xplusz.com"} ){   _id: 1,   name: "Billy",   email: "Billy.Xu@xplusz.com",   title: "engineer",   addresses: [      { street: "street 1", city: "Su zhou" },      { street: "street 2", city: "Shang hai" }   ]}
+> db.user.findOne( { email: "Billy.Xu@xplusz.com"} ){   _id: 1,   name: "Billy",   email: "Billy.Xu@xplusz.com",   title: "engineer",   addresses: [      { street: "street 1", city: "Su zhou" },      { street: "street 2", city: "Shang hai" }   ]}
 ```
 
 #### Embeding vs Referencing
 * Embeding: one - many (few)
+
+```javascript
+> db.user.findOne( { email: "Billy.Xu@xplusz.com"} ){   _id: 1,   name: "Billy",   // ... previous fields
+   tasks: [      {          summary: "Run 10 km",          due_date: ISODate("2018-12-25T08:37:50.465Z"),          status: "NOT_STARTED"		},      { // another task }   ]}
+```
 * Referencing: one - many
+
+```javascript
+> db.user.findOne( { email: "Billy.Xu@xplusz.com"} ){   _id: 1,   name: "Billy",   email: "Billy.Xu@xplusz.com",   title: "engineer",   addresses: [      { street: "street 1", city: "Su zhou" },      { street: "street 2", city: "Shang hai" }   ]}
+```
+
+```javascript
+> db.task.findOne({user_id: 1}){	_id: 5,	summary: "Run 10 km",   due_date: ISODate(),   status: "NOT_STARTED",   user_id: 1}
+```
 
 * many to many
 
@@ -199,6 +218,10 @@ db.getCollection('tweets').aggregate([
 
 ### Index
 
-### 复制
+### 副本集（ReplicaSets）
+* 高可用性 （24h 可用）
+* 灾难恢复
+* 读写分离
 
-### 分片
+### 分片 （Sharding）
+* 片键
